@@ -57,7 +57,7 @@
         <p class="opis">
  Mariusz Zbigniew Pudzianowski ps. Pudzian, Dominator, Pyton, Pudzilla (ur. 7 lutego 1977 w Białej Rawskiej) 
  – polski zawodnik mieszanych sztuk walki (MMA), wcześniej utytułowany strongman i rugbysta. 
- Obecny nr. 8 rankingu KSW w wadze ciężkiej.Ośmiokrotny Mistrz Polski Strongman. 
+ Obecny nr. 8 rankingu KSW w wadze ciężkiej[1].Ośmiokrotny Mistrz Polski Strongman. 
  Sześciokrotny Mistrz Europy Strongman w latach 2002–2004 i 2007–2009. 
  Pięciokrotny Mistrz Świata Strongman w latach 2002, 2003, 2005, 2007 i 2008. 
  Trzykrotny drużynowy Mistrz Świata Par Strongman w latach 2003–2005. 
@@ -194,6 +194,12 @@
                       </tr>
                     </thead>
                     <tbody>
+                      <tr class="wyniki_tr_2">
+                        <td class="padding_table">03-06-2023</td>
+                        <td class="padding_table" class="fighter">Artur Szpilka</td>
+                        <td class="padding_table">XTB KSW Colosseum 2 - Mamed Khalidov vs. Scott Askham  </td>
+                        <td class="padding_table" style="padding:10px 20px 0px 10px;"><span class="point_l">L</span>KO</td>
+                      </tr>
                       <tr class="wyniki_tr_1">
                         <td class="padding_table">17-12-2022</td>
                         <td class="padding_table" class="fighter">Mamed Chalidow</td>
@@ -335,9 +341,47 @@
         </script>
   </section>
     <section id="contact" class="contact-section">
+      <div class="screen">
+        <div class="screen-header">
+          <div class="screen-header-left">
+            <div class="screen-header-button close"></div>
+            <div class="screen-header-button maximize"></div>
+            <div class="screen-header-button minimize"></div>
+          </div>
+          <div class="screen-header-right">
+            <div class="screen-header-ellipsis"></div>
+            <div class="screen-header-ellipsis"></div>
+            <div class="screen-header-ellipsis"></div>
+          </div>
+        </div>
+        <div class="screen-body">
+          <div class="screen-body-item left">
+            <div class="app-title">
+              <span>NAPISZ</span>
+              <span>DO NAS</span>
+            </div>
+          </div>
+          <div class="screen-body-item">
+            <div class="app-form">
+            <form>
+              <div class="app-form-group">
+                <input class="app-form-control" placeholder="IMIĘ" required>
+              </div>
+              <div class="app-form-group">
+                <input class="app-form-control" placeholder="EMAIL" required>
+              </div>
+              <div class="app-form-group message">
+                <input class="app-form-control" placeholder="WIADOMOŚĆ" required>
+              </div>
+              <div class="app-form-group buttons">
+                <button class="app-form-button">WYŚLIJ</button>
+              </div>
+            </form>
+            </div>
+          </div>
+        </div>
+      </div>
       <div class="slideshow-container">
-
-        <!-- Tu zaczynaja sie slajdy -->
         <div id="cytat1">
           <q>Moja lewa ręka to śmierć, a prawej sam się boję.</q>
         </div>
@@ -349,24 +393,39 @@
         <div style="display:none;" id="cytat3">
           <q>Tanio skóry nie sprzedam.</q>
         </div>
+        <div style="display:none;" id="cytat4">
+          <q>Pudzian nie wielbłąd czasami napić się musi</q>
+        </div>
+        <div style="display:none;" id="cytat5">
+          <q>Cierpliwy i kamień ugotuje</q>
+        </div>
       </div>
       <script>
         function cytat() {
           var cytat1 = document.getElementById("cytat1");
           var cytat2 = document.getElementById("cytat2");
           var cytat3 = document.getElementById("cytat3");
+          var cytat4 = document.getElementById("cytat4");
+          var cytat5 = document.getElementById("cytat5");
           cytat1display = window.getComputedStyle(cytat1).display;
           cytat2display = window.getComputedStyle(cytat2).display;
           cytat3display = window.getComputedStyle(cytat3).display;
+          cytat4display = window.getComputedStyle(cytat4).display;
+          cytat5display = window.getComputedStyle(cytat5).display;
           if(cytat1display == "block"){
             cytat1.style.display ="none";
             cytat2.style.display ="block";
           }else if (cytat2display == "block"){
             cytat2.style.display ="none";
             cytat3.style.display ="block";
-          }else{
+          }else if(cytat3display == "block"){
+            cytat4.style.display ="block";
             cytat3.style.display ="none";
-            cytat2.style.display ="none";
+          }else if(cytat4display == "block"){
+            cytat4.style.display ="none";
+            cytat5.style.display ="block";
+          }else{
+            cytat5.style.display ="none";
             cytat1.style.display ="block";
           }
           setTimeout(cytat, 5000);
@@ -395,7 +454,7 @@
         </a>
         <br>
     <a target="_blank"
-    href="pudzian.pl"
+    href="https://pudzian.pl/"
      class="btn contact-details">
      <i class="fa-brands fa-edge fa-2xl"></i>
     </a>
