@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Blackjack – Hit czy Stay</title>
+  <style>
+    :root { --bg:#0f1220; --card:#171a2d; --muted:#9aa3b2; --accent:#4ea1ff; --ok:#2ecc71; --warn:#ffcc00; --hit:#3b82f6; --stay:#22c55e; }
+    * { box-sizing: border-box; }
+    body {
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      background: linear-gradient(180deg, #0b0e1a, var(--bg) 28%);
+      color: #e6e9ef;
+      display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px;
+    }
+    .app {
+      width: min(920px, 100%); background: var(--card); border:1px solid #22263f; border-radius:16px; padding:20px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    h1 { font-size: 22px; margin:0 0 14px }
+    p.lead { color: var(--muted); margin-top:0 }
+    .row { display:grid; gap:16px; grid-template-columns: 1fr; }
+    @media (min-width: 860px) { .row { grid-template-columns: 2fr 1fr; } }
+    .card {
+      background:#0f1224; border:1px solid #242a48; border-radius:12px; padding:16px;
+    }
+    .controls { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+    select, button {
+      appearance:none; border:1px solid #2a3157; background:#0b0f22; color:#e6e9ef; padding:10px 12px; border-radius:10px; font-size:15px;
+    }
+    select { min-width: 88px; }
+    button { cursor:pointer; border-color:#3a6cf0; }
+    button.primary { background: linear-gradient(180deg, #4774ff, #3659ff); border-color: transparent; }
+    button.ghost { background:#0b0f22; }
+    .hint { color: var(--muted); font-size: 13px; margin-top:6px }
+    .stack { display:flex; gap:10px; flex-wrap:wrap; }
+    .stack select { min-width: 90px; }
+    .stack .remove {
+      border:1px solid #3a2a2a; background:#1b1212; color:#ffaaaa; padding:8px 10px; border-radius:8px; cursor:pointer;
+    }
+    .result {
+      display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:10px;
+      background:#0b0f22; border:1px dashed #2a3157; border-radius:12px; padding:14px;
+    }
+    .badge {
+      font-weight:700; letter-spacing:.3px; padding:10px 14px; border-radius:10px; min-width:120px; text-align:center;
+    }
+    .badge.hit { background: rgba(59,130,246,.15); border:1px solid rgba(59,130,246,.4); color:#cfe4ff; }
+    .badge.stay { background: rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.4); color:#d9ffe6; }
+    .totals { color: var(--muted); }
+    .footer { margin-top:10px; font-size:12px; color:#9aa3b2 }
+    .grid { display:grid; gap:8px }
+    .grid label { font-size:13px; color: var(--muted) }
+    a { color: var(--accent) }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>Blackjack — Hit czy Stay</h1>
+    <p class="lead">Wybierz <strong>swoje karty</strong> (możesz dodać więcej niż dwie) i <strong>odkrytą kartę dilera</strong>, a potem kliknij <em>Sprawdź</em>.</p>
+
+    <div class="row">
+      <section class="card">
+        <div class="grid">
+          <label>Twoje karty</label>
+          <div id="playerCards" class="stack"></div>
+          <div class="controls">
+            <button class="ghost" id="addCardBtn" type="button">+ Dodaj kartę</button>
+            <button class="primary" id="checkBtn" type="button">Sprawdź</button>
+          </div>
+          <div class="hint">Figury (J, Q, K) liczą się jako 10. As liczy się jako 11, o ile nie powoduje bustu (wtedy 1).</div>
+        </div>
+      </section>
+
+      <aside class="card">
+        <div class="grid">
+          <label>Karta dilera</label>
+          <select id="dealerUpcard" aria-label="Karta dilera">
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5" selected>5</option>
+            <option value="6">6</option>
+            <option value="7">7</option>
+            <option value="8">8</option>
+            <option value="9">9</option>
+            <option value="10">10</option>
+            <option value="J">J</option>
+            <option value="Q">Q</option>
+            <option value="K">K</option>
+            <option value="A">A</option>
+          </select>
+
+          <div class="result" id="resultBox" hidden>
+            <div class="totals" id="totalsText">Suma: —</div>
+            <div class="badge" id="decisionBadge">—</div>
+          </div>
+
+          <div class="footer">
+            Zasady: brak podwajania, splitu i ubezpieczenia. Strategia: twarde/miękkie ręce (A jako 11).
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    // ------- Utilities -------
+    const RANKS = ["A","K","Q","J","10","9","8","7","6","5","4","3","2"];
+    function createCardSelect() {
+      const wrap = document.createElement('div');
+      wrap.className = 'stack';
+      const sel = document.createElement('select');
+      sel.innerHTML = RANKS.map(r => `<option value="${r}">${r}</option>`).join('');
+      sel.value = "10"; // sensowne domyślne
+      wrap.appendChild(sel);
+      const rm = document.createElement('button');
+      rm.className = 'remove';
+      rm.type = 'button';
+      rm.textContent = 'Usuń';
+      rm.addEventListener('click', () => {
+        wrap.remove();
+        refreshIfAuto();
+      });
+      wrap.appendChild(rm);
+      return wrap;
+    }
+
+    function rankToValue(rank) {
+      if (rank === "A") return 11; // na start 11, potem ewentualnie obniżymy
+      if (rank === "K" || rank === "Q" || rank === "J") return 10;
+      return parseInt(rank, 10);
+    }
+
+    // Liczymy wartość ręki i miękkość
+    function evaluateHand(ranks) {
+      let total = 0;
+      let aces = 0;
+      for (const r of ranks) {
+        if (r === "A") aces++;
+        total += rankToValue(r);
+      }
+      // Redukujemy asy z 11 do 1 jeśli trzeba
+      let soft = false;
+      while (total > 21 && aces > 0) {
+        total -= 10; // 11 -> 1
+        aces--;
+      }
+      // Soft = jeśli przynajmniej jeden as nadal liczony jako 11
+      soft = aces > 0; // po redukcji zostały asy jako 11?
+      return { total, soft };
+    }
+
+    function upcardToNumber(up) {
+      if (["10","J","Q","K"].includes(up)) return 10;
+      if (up === "A") return 11; // używamy 11 jako marker Asa
+      return parseInt(up, 10);
+    }
+
+    // ------- Decyzja Hit/Stay według uproszczonej tabeli -------
+    function decideAction(total, soft, dealerNum) {
+      // Uprzejme skróty
+      const isDealer246 = dealerNum >= 2 && dealerNum <= 6;
+      const isDealer456 = dealerNum >= 4 && dealerNum <= 6;
+      const isDealer910A = dealerNum === 9 || dealerNum === 10 || dealerNum === 11;
+
+      // Naturalne przypadki
+      if (total >= 21) return "Stay"; // 21 zawsze zostajemy
+
+      if (soft) {
+        // Miękkie sumy
+        if (total >= 19) return "Stay"; // A+8 (19) i A+9 (20)
+        if (total === 18) {
+          return (isDealer910A) ? "Hit" : "Stay"; // Stand vs 2,3,4,5,6,7,8; Hit vs 9,10,A
+        }
+        // A+2..A+6 (13..17): w tej wersji bez double => Hit zawsze
+        return "Hit";
+      } else {
+        // Twarde sumy
+        if (total >= 17) return "Stay";
+        if (total === 16 || total === 15 || total === 14 || total === 13) {
+          return isDealer246 ? "Stay" : "Hit";
+        }
+        if (total === 12) {
+          return isDealer456 ? "Stay" : "Hit";
+        }
+        // 11 lub mniej: zawsze Hit
+        return "Hit";
+      }
+    }
+
+    // ------- UI logic -------
+    const playerCardsDiv = document.getElementById('playerCards');
+    const addBtn = document.getElementById('addCardBtn');
+    const checkBtn = document.getElementById('checkBtn');
+    const dealerSel = document.getElementById('dealerUpcard');
+    const resultBox = document.getElementById('resultBox');
+    const totalsText = document.getElementById('totalsText');
+    const decisionBadge = document.getElementById('decisionBadge');
+
+    function getPlayerRanks() {
+      return Array.from(playerCardsDiv.querySelectorAll('select')).map(s => s.value);
+    }
+
+    function showDecision() {
+      const ranks = getPlayerRanks();
+      if (ranks.length === 0) {
+        alert("Dodaj przynajmniej jedną kartę.");
+        return;
+      }
+      const dealer = dealerSel.value;
+      const { total, soft } = evaluateHand(ranks);
+      const dealerNum = upcardToNumber(dealer);
+      const decision = decideAction(total, soft, dealerNum);
+
+      resultBox.hidden = false;
+      totalsText.textContent = `Twoja suma: ${total}  •  ${soft ? "miękka (z A=11)" : "twarda" }  •  Diler: ${dealer}`;
+      decisionBadge.textContent = decision.toUpperCase();
+      decisionBadge.className = `badge ${decision.toLowerCase()}`;
+    }
+
+    function refreshIfAuto() {
+      if (!resultBox.hidden) showDecision();
+    }
+
+    // Inicjalizacja: 2 karty
+    for (let i=0;i<2;i++) playerCardsDiv.appendChild(createCardSelect());
+
+    addBtn.addEventListener('click', () => {
+      playerCardsDiv.appendChild(createCardSelect());
+    });
+
+    checkBtn.addEventListener('click', showDecision);
+    dealerSel.addEventListener('change', refreshIfAuto);
+    playerCardsDiv.addEventListener('change', refreshIfAuto);
+  </script>
+</body>
+</html>
